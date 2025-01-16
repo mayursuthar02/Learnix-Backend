@@ -15,6 +15,7 @@ import messageRoute from './routes/messageRoute.js';
 import conversationRoute from './routes/conversationRoute.js';
 import updateRoute from './routes/updateRoute.js';
 import FAQsRoute from './routes/FAQsRoute.js';
+import questionRoute from './routes/questionRoute.js';
 
 // Database Import
 import connectDB from './db/connectDB.js';
@@ -57,6 +58,7 @@ app.use('/api/FAQs', FAQsRoute);
 app.use('/api/chats', chatRoute);
 app.use('/api/messages', messageRoute);
 app.use('/api/conversations', conversationRoute);
+app.use('/api/questions', questionRoute);
 
 
 // Server Listen

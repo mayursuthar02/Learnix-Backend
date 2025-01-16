@@ -1,8 +1,10 @@
 import conversationModel from '../models/conversationModel.js';
 import messageModel from '../models/messageModel.js';
 import resourceModel from '../models/resourceModel.js';
+import examDetailsResourceModel from '../models/examDetailsModel.js';
+import timeTableModel from '../models/timeTableModel.js';
+import previousPapersResourceModel from '../models/previousPaperModel.js';
 import { processQueryWithGoogleAI } from '../services/aiService.js';
-// import { extractContentFromFile } from "../helpers/fileProcessor.js";
 
 // 1. Start
 export const start = async (req, res) => {
@@ -11,10 +13,11 @@ export const start = async (req, res) => {
 
     const message = "Hi there! How can I assist you today? Choose one of the options below, or feel free to ask me directly about any topic like 'What is JS?' or 'Explain variables.'";
     const options =  [
-      {option: "Access Study Material 📚", apiRoute: "/get-semster/ACCESS_STUDY_MATERIAL"},
-      {option: "Check Exam Dates 🗓️", apiRoute: "/get-semster/CHECK_EXAM_DATES"},
+      {option: "Access Study Materials 📚", apiRoute: "/get-semster/ACCESS_STUDY_MATERIAL"},
+      {option: "Check Exam Details 🗓️", apiRoute: "/get-semster/CHECK_EXAM_DETAILS"},
       {option: "View Time Table 🕒", apiRoute: "/get-semster/VIEW_TIME_TABLE"},
-      {option: "Ask Scholara... 💡", apiRoute: "/"},
+      {option: "Access Previous Papers 📃", apiRoute: "/get-semster/ACCESS_PREVIOUS_PAPERS"},
+      {option: "Ask Learnix... 💡", apiRoute: "/"},
     ];
 
     let conversation = await conversationModel.findById(conversationId);
@@ -22,7 +25,7 @@ export const start = async (req, res) => {
       // Create a new conversation if it doesn't exist
       conversation  = new conversationModel({
         userId: req.user._id,
-        title: "New Conversation"
+        title: "Hello!"
       });
       await conversation.save();
     }
@@ -30,7 +33,7 @@ export const start = async (req, res) => {
     // Create and store a new message associated with the conversation
     const newMessage = new messageModel({
       conversationId: conversation._id,
-      sender: "scholara",
+      sender: "learnix",
       botResponse: {
         message,
         options
@@ -62,22 +65,31 @@ export const getSemester = async(req, res) => {
     if (!conversation) {
       return res.status(400).json({status: "fail", error: "Conversation not found!"});
     }
-    conversation.title = option || conversation.title; 
-    await conversation.save();
- 
-    const message = "Awesome! Could you tell me which semester you're in? Choose from the options below.";
+    
+    let message = "";
+
+    if (option === "ACCESS_STUDY_MATERIAL") {
+      message = "Great! To help you access the study materials, please let me know your semester. Select from the options below.";
+    } else if (option === "CHECK_EXAM_DETAILS") {
+      message = "Awesome! Let’s get started with your exam details. Please tell me your semester by choosing from the options below.";
+    } else if (option === "VIEW_TIME_TABLE") {
+      message = "Fantastic! To fetch your semester's timetable, please select your semester from the options below.";
+    } else if (option === "ACCESS_PREVIOUS_PAPERS") {
+      message = "Perfect! To find previous exam papers, could you let me know your semester? Choose from the options below.";
+    }
+    
     const options = Array.from({ length: 6 }, (_, i) => {
       const semester = `semester ${i + 1}`;
       return {
         option: semester,
-        apiRoute: `/get-subject/${option}/${semester}`,
+        apiRoute: `/student-data-Selector/${option}/${semester}`,
       };
     });
       
     // Create and store a new message associated with the conversation
     const newMessage = new messageModel({
       conversationId: conversation._id,
-      sender: "scholara",
+      sender: "learnix",
       botResponse: {
         message,
         options
@@ -93,7 +105,7 @@ export const getSemester = async(req, res) => {
 
 
 // 3. Get Subject
-export const getSubject = async(req, res) => {
+export const studentDataSelector = async(req, res) => {
   try {
     const {option, semester} = req.params;
     const { conversationId } = req.body;
@@ -110,46 +122,109 @@ export const getSubject = async(req, res) => {
         error: "conversationId is required!",
       });
     }
-
     const conversation = await conversationModel.findById(conversationId);
     if (!conversation) {
       return res.status(400).json({status: "fail", error: "Conversation not found!"});
     }
-    conversation.title = semester || conversation.title; 
-    await conversation.save();
 
-    const subjects = await resourceModel.distinct("subject", { semester });
-
-    let message, options;
+    let message = "", options = [];
     
-    if (subjects.length === 0) {
-       // No subjects found for the given semester
-      message = `No subjects found for ${semester}. Would you like to explore other semesters?`;
-      options = Array.from({ length: 6 }, (_, i) => {
-        const sem = `semester ${i + 1}`;
-        return {
-          option: sem,
-          apiRoute: `/get-subject/${option}/${sem}`,
-        };
-      });
-    } else {
-      // Subjects found for the given semester
-      message = `Here are the subjects for ${semester}. Select a subject to get study materials:`;
-      options = subjects.map((subject) => ({
-        option: subject,
-        apiRoute: `/get-materials/${option}/${semester}/${subject}`,
-      }));
+    if (option === "ACCESS_STUDY_MATERIAL") {
+      const subjects = await resourceModel.distinct("subject", { semester });
+    
+      if (subjects.length === 0) {
+        // No subjects found for the given semester
+        message = `We couldn't find any subjects for ${semester}. Would you like to explore other semesters?`;
+        options = Array.from({ length: 6 }, (_, i) => {
+          const sem = `semester ${i + 1}`;
+          return {
+            option: sem,
+            apiRoute: `/get-subject/${option}/${sem}`,
+          };
+        });
+      } else {
+        // Subjects found for the given semester
+        message = `Here are the subjects available for ${semester}. Please select one to get the study materials:`;
+        options = subjects.map((subject) => ({
+          option: subject,
+          apiRoute: `/get-resources/${option}/${semester}/${subject}`,
+        }));
+      }
+    } 
+    else if (option === "CHECK_EXAM_DETAILS") {
+      const examTypes = await examDetailsResourceModel.distinct("examType", { semester });
+      if (examTypes.length === 0) {
+        message = `We couldn't find any exam types for ${semester}. Please check other semesters.`;
+        options = Array.from({ length: 6 }, (_, i) => {
+          const semester = `semester ${i + 1}`;
+          return {
+            option: semester,
+            apiRoute: `/student-data-Selector/${option}/${semester}`,
+          };
+        });
+      } else {
+        message = `Here are the available exam types for your ${semester}. Select one to get detailed information:`;
+        options = examTypes.map((examType) => ({
+          option: examType,
+          apiRoute: `/get-resources/${option}/${semester}/${examType}`,
+        }));
+      }
+    } 
+    else if (option === "VIEW_TIME_TABLE") {
+      const divisions = await timeTableModel.distinct("division", { semester });
+      if (divisions.length === 0) {
+        message = `No divisions found for ${semester}. Try selecting a different semester.`;
+        options = Array.from({ length: 6 }, (_, i) => {
+          const semester = `semester ${i + 1}`;
+          return {
+            option: semester,
+            apiRoute: `/student-data-Selector/${option}/${semester}`,
+          };
+        });
+      } else {
+        message = "Please select your division to view the timetable:";
+        options = divisions.map((division) => ({
+          option: division,
+          apiRoute: `/get-resources/${option}/${semester}/${division}`,
+        }));
+      }
+    } 
+    else if (option === "ACCESS_PREVIOUS_PAPERS") {
+      const examTypes = await previousPapersResourceModel.distinct("examType", { semester });
+      console.log(examTypes);
+      if (examTypes.length === 0) {
+        message = `We couldn't find any previous papers for ${semester}. Please try another semester.`;
+        options = Array.from({ length: 6 }, (_, i) => {
+          const sem = `Semester ${i + 1}`;
+          return {
+            option: sem,
+            apiRoute: `/student-data-Selector/${option}/${sem}`,
+          };
+        });
+      } else {
+        message = "Select the exam type for which you need previous papers:";
+        options = examTypes.map((examType) => ({
+          option: examType,
+          apiRoute: `/get-resources/${option}/${semester}/${examType}`,
+        }));
+      }
     }
+    else {
+      // Handle any other unexpected options or default behavior
+      message = "Invalid option selected.";
+      options = [];
+    }
+    
 
-    // Store response as a bot message
+    // Create and store a new message associated with the conversation
     const newMessage = new messageModel({
-      conversationId,
-      sender: "scholara",
+      conversationId: conversation._id,
+      sender: "learnix",
       botResponse: {
         message,
-        options,
-      },
-    }); 
+        options
+      }
+    });
     await newMessage.save();
     res.status(200).json({status: "success", newMessage});
     
@@ -160,17 +235,18 @@ export const getSubject = async(req, res) => {
 }
 
 
+
 // 3. Get Material
 export const getMaterials = async(req, res) => {
   try {
-    const {option, semester, subject} = req.params;
+    const {option, semester, studentDataSelector} = req.params;
     const { conversationId } = req.body;
 
     // Input validation
-    if (!option || !semester || !subject) {
+    if (!option || !semester || !studentDataSelector) {
       return res.status(400).json({
         status: "fail",
-        error: "Please provide option, semester, and subject!",
+        error: "Please provide option, semester, and studentDataSelector!",
       });
     }
     if (!conversationId) {
@@ -180,58 +256,174 @@ export const getMaterials = async(req, res) => {
       });
     }
 
-    const conversation = await conversationModel.findById(conversationId);
-    if (!conversation) {
-      return res.status(400).json({status: "fail", error: "Conversation not found!"});
-    }
-    conversation.title = subject || conversation.title; 
-    await conversation.save();
-
-    // Fetch materials for the given semester and subject
-    const materials = await resourceModel.find({ semester, subject }).populate("userId");
 
     let message, options, botResponse;
-    
-    if (materials.length === 0) {
-      // No resources found
-      message = `Sorry, we couldn't find any resources for '${subject}' in '${semester}'. Please check back later or explore other subjects!`;
 
-      const subjects = await resourceModel.distinct("subject", { semester });
-      options = subjects.map((subj) => ({
-        option: subj,
-        apiRoute: `/get-materials/${option}/${semester}/${subj}`,
-      }));
-
-      botResponse = { message, options };
-    
-    } else {
-      // Resource Found
-      message = `Great choice! Here's the resource link for '${subject}' in ${semester}:`;
+    if (option === "ACCESS_STUDY_MATERIAL") {
+      // Fetch materials for the given semester and subject
+      const materials = await resourceModel.find({ semester, subject: studentDataSelector }).populate("userId");
       
-      const resources = materials.map(material => ({
-        title: material.title,
-        subject: material.subject,
-        semester: material.semester,
-        resourceLink: material.resourceLink,
-        note: material.note,
-        author: material.userId.fullName
-      }));
-
-      const note = "Let us know if you need resources for other subjects or semesters!";
-
-      const subjects = await resourceModel.distinct("subject", { semester });
-      options = subjects.map((subj) => ({
-        option: subj,
-        apiRoute: `/get-materials/${option}/${semester}/${subj}`,
-      }));
-
-      botResponse = { message, resources, note, options };
+      if (materials.length === 0) {
+        // No resources found
+        message = `Unfortunately, we couldn't find study materials for "${studentDataSelector}" in "${semester}". Would you like to explore materials for other subjects?`;
+  
+        const subjects = await resourceModel.distinct("subject", { semester });
+        options = subjects.map((subj) => ({
+          option: subj,
+          apiRoute: `/get-resources/${option}/${semester}/${subj}`,
+        }));
+  
+        botResponse = { message, options };
+      
+      } else {
+        // Resource Found
+        message = `Here are some valuable resources for "${studentDataSelector}" in ${semester}. Click the links below to access them:`;
+        
+        const resources = materials.map(material => ({
+          title: material.title,
+          subject: material.subject,
+          semester: material.semester,
+          resourceLink: material.resourceLink,
+          note: material.note,
+          author: material.userId.fullName
+        }));
+  
+        const note = `Let us know if you need resources for other subjects in ${semester}`;
+  
+        const subjects = await resourceModel.distinct("subject", { semester });
+        options = subjects.map((subj) => ({
+          option: subj,
+          apiRoute: `/get-resources/${option}/${semester}/${subj}`,
+        }));
+  
+        botResponse = { message, resources, note, options };
+      }
+      
+    } 
+    else if (option === "CHECK_EXAM_DETAILS") {
+      // Fetch materials for the given semester and subject
+      const materials = await examDetailsResourceModel.find({ semester, examType: studentDataSelector }).populate("userId");
+      
+      if (materials.length === 0) {
+        // No resources found
+        message = `We couldn't locate detailed information for "${studentDataSelector}" in "${semester}". Would you like to explore other exam types?`;
+  
+        const examTypes = await examDetailsResourceModel.distinct("examType", { semester });
+        options = examTypes.map((examType) => ({
+          option: examType,
+          apiRoute: `/get-resources/${option}/${semester}/${examType}`,
+        }));
+  
+        botResponse = { message, options };
+      
+      } else {
+        // Resource Found
+        message = `Great choice! Here's the exam details link for '${studentDataSelector}' in ${semester}:`;
+        
+        const resources = materials.map(material => ({
+          title: material.title,
+          examType: material.examType,
+          semester: material.semester,
+          resourceLink: material.resourceLink,
+          description: material.description,
+          author: material.userId.fullName
+        }));
+  
+        const note = `If you need more details about other exams for ${semester}, feel free to ask!`;
+  
+        const examTypes = await examDetailsResourceModel.distinct("examType", { semester });
+        options = examTypes.map((examType) => ({
+          option: examType,
+          apiRoute: `/get-resources/${option}/${semester}/${examType}`,
+        }));
+  
+        botResponse = { message, resources, note, options };
+      }
+    } 
+    else if (option === "VIEW_TIME_TABLE") {
+      // Fetch materials for the given semester and subject
+      const materials = await timeTableModel.find({ semester, division: studentDataSelector }).populate("userId");
+      
+      if (materials.length === 0) {
+        // No resources found
+        message = `We couldn't found time table for "${studentDataSelector}" in "${semester}". Would you like to explore other divisions?`;
+  
+        const divisions = await timeTableModel.distinct("division", { semester });
+        options = divisions.map((division) => ({
+          option: division,
+          apiRoute: `/get-resources/${option}/${semester}/${division}`,
+        }));
+  
+        botResponse = { message, options };
+      
+      } else {
+        // Resource Found
+        message = `Great choice! Here's the time table link for '${studentDataSelector}' in ${semester}:`;
+        
+        const resources = materials.map(material => ({
+          title: material.title,
+          division: material.division,
+          semester: material.semester,
+          resourceLink: material.resourceLink,
+          description: material.description,
+          author: material.userId.fullName
+        }));
+  
+        const note = `If you need other division title table for ${semester}, feel free to ask!`;
+  
+        const divisions = await timeTableModel.distinct("division", { semester });
+        options = divisions.map((division) => ({
+          option: division,
+          apiRoute: `/get-resources/${option}/${semester}/${division}`,
+        }));
+  
+        botResponse = { message, resources, note, options };
+      }
+    }    
+    else if (option === "ACCESS_PREVIOUS_PAPERS") {
+      // Fetch materials for the given semester and subject
+      const materials = await previousPapersResourceModel.find({ semester, examType: studentDataSelector }).populate("userId");
+      
+      if (materials.length === 0) {
+        // No resources found
+        message = `We couldn't find examtype for "${studentDataSelector}" in "${semester}". Would you like to explore other exam types?`;
+  
+        const examTypes = await previousPapersResourceModel.distinct("examType", { semester });
+        options = examTypes.map((examType) => ({
+          option: examType,
+          apiRoute: `/get-resources/${option}/${semester}/${examType}`,
+        }));
+  
+        botResponse = { message, options };
+      
+      } else {
+        // Resource Found
+        message = `Great choice! Here's the previous papers link for '${studentDataSelector}' in ${semester}:`;
+        
+        const resources = materials.map(material => ({
+          title: material.title,
+          examType: material.examType,
+          semester: material.semester,
+          resourceLink: material.resourceLink,
+          description: material.description,
+          author: material.userId.fullName
+        }));
+  
+        const note = `If you need papers for other exams for ${semester}, feel free to ask!`;
+  
+        const examTypes = await previousPapersResourceModel.distinct("examType", { semester });
+        options = examTypes.map((examType) => ({
+          option: examType,
+          apiRoute: `/get-resources/${option}/${semester}/${examType}`,
+        }));
+  
+        botResponse = { message, resources, note, options };  
+      }
     }
-    
     // Save bot response
     const newMessage = new messageModel({
       conversationId,
-      sender: "scholara",
+      sender: "learnix",
       botResponse
     });
     await newMessage.save();
@@ -247,46 +439,28 @@ export const getMaterials = async(req, res) => {
 
 
 // Scholora Logic
-export const activateScholara = async (req, res) => {
+export const activateScholara = async(req, res) => {
   try {
-    const { prompt, conversationId } = req.body;
-    const file = req.file; // Handle file uploaded via multer
-
-    if (!prompt && !file) {
-      return res
-        .status(400)
-        .json({ status: "fail", error: "Either prompt or file is required!" });
+    const {prompt, conversationId} = req.body;
+    if (!prompt) {
+      return res.status(400).json({status: "fail", error: "Prompt is required!"});
     }
-
     if (!conversationId) {
-      return res
-        .status(400)
-        .json({ status: "fail", error: "conversationId not found" });
+      return res.status(400).json({status: "fail", error: "conversationId not found"});
     }
 
-    const conversation = await conversationModel.findById(conversationId);
-    conversation.title = prompt || conversation.title;
-    await conversation.save();
-
-    let fileContent = "";
-    if (file) {
-      fileContent = await extractContentFromFile(file); // Extract content
-    }
-
-    const combinedPrompt = `${prompt || ""}\n\nFile Content:\n${fileContent}`;
-
-    const aiResponse = await processQueryWithGoogleAI(combinedPrompt);
+    const response = await processQueryWithGoogleAI(prompt);
 
     const newMessage = new messageModel({
       conversationId,
       sender: "ai",
-      aiResponse,
-    });
+      aiResponse: response
+    })
     await newMessage.save();
-
-    res.status(200).json({ status: "success", newMessage });
+    
+    res.status(200).json({status: "success", newMessage});
+    
   } catch (error) {
-    console.error("Error in activateScholara:", error.message);
-    res.status(500).json({ status: "error", error: error.message });
+    res.status(500).json({status: "error", error});
   }
-};
+}

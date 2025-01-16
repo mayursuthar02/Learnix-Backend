@@ -1,6 +1,6 @@
 import express from 'express';
 import protectRoute from '../middleware/protectRoute.js';
-import { activateScholara, getMaterials, getSemester, getSubject, start } from '../controllers/chatController.js';
+import { activateScholara, getMaterials, getSemester, start, studentDataSelector } from '../controllers/chatController.js';
 import multer from 'multer';
 
 
@@ -21,8 +21,8 @@ const upload = multer({
 
 router.post('/start', protectRoute, start);
 router.post('/get-semster/:option', protectRoute, getSemester);
-router.post('/get-subject/:option/:semester', protectRoute, getSubject);
-router.post('/get-materials/:option/:semester/:subject', protectRoute, getMaterials);
+router.post('/student-data-Selector/:option/:semester', protectRoute, studentDataSelector);
+router.post('/get-resources/:option/:semester/:studentDataSelector', protectRoute, getMaterials);
 
 // Scholara
 router.post('/activateScholara', protectRoute, activateScholara);

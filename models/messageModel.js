@@ -9,7 +9,7 @@ const messageSchema = new mongoose.Schema(
     },
     sender: {
       type: String,
-      enum: ["user", "scholara", "ai"],
+      enum: ["user", "learnix", "ai"],
       required: true,
     },
     userPrompt: {
@@ -32,9 +32,12 @@ const messageSchema = new mongoose.Schema(
         {
           title: { type: String, trim: true },
           subject: { type: String, trim: true },
+          examType: { type: String, trim: true },
+          division: { type: String, trim: true },
           semester: { type: String, trim: true },
           resourceLink: { type: String, trim: true },
           note: { type: String, trim: true },
+          description: { type: String, trim: true },
           author: { type: String, trim: true }, 
         },
       ], 
