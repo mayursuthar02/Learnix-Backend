@@ -15,7 +15,7 @@ export const getMessages = async(req, res) => {
         if (!messages || messages.length === 0) {
             return res.status(404).json({
                 status: "fail",
-                message: "No messages found for this conversationId."
+                error: "No messages found for this conversationId."   
             });
         }
 
@@ -71,3 +71,45 @@ export const userPrompt = async(req, res) => {
         });
     }
 }
+
+export const userLikeDislikeResponse = async (req, res) => {
+    try {
+      const { responseType } = req.body;  // Reaction (good/bad)
+      const userId = req.user._id;  // User's ID (assuming authentication middleware populates req.user)
+      const { messageId } = req.params;  // Message ID in the request URL
+        
+      if (!responseType) {
+        return res.status(400).json({
+          status: "fail",
+          error: "responseType not found!",
+        });
+      }
+      
+      // Find the message by ID
+      const message = await messageModel.findById(messageId);
+      if (!message) {
+        return res.status(400).json({
+          status: "fail",
+          error: "Message not found!",
+        });
+      }
+  
+      // Update the responseType for the message based on user input
+      message.responseType = responseType || message.responseType;
+      message.usersReacted = userId;
+      await message.save();
+  
+      return res.status(200).json({
+        status: "success",
+        message: "Message updated successfully!",
+        data: message,
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({
+        status: "fail",
+        error: "Something went wrong. Please try again later.",
+      });
+    }
+  };
+  

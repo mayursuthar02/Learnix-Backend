@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
+import { v2 as cloudinary } from "cloudinary";
 
 // Routes Import
 import userRoute from './routes/userRoute.js';
@@ -16,6 +17,7 @@ import conversationRoute from './routes/conversationRoute.js';
 import updateRoute from './routes/updateRoute.js';
 import FAQsRoute from './routes/FAQsRoute.js';
 import questionRoute from './routes/questionRoute.js';
+import eventRoute from './routes/eventRoute.js';
 
 // Database Import
 import connectDB from './db/connectDB.js';
@@ -25,6 +27,15 @@ import connectDB from './db/connectDB.js';
 dotenv.config();
 const app = express();
 const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 
 // Database Connection
 connectDB();
@@ -59,6 +70,7 @@ app.use('/api/chats', chatRoute);
 app.use('/api/messages', messageRoute);
 app.use('/api/conversations', conversationRoute);
 app.use('/api/questions', questionRoute);
+app.use('/api/events', eventRoute);
 
 
 // Server Listen

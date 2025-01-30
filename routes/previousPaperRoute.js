@@ -1,5 +1,5 @@
 import express from 'express';
-import protectRoute from '../middleware/protectRoute.js';
+import adminProtectRoute from '../middleware/adminProtectRoute.js';
 import multer from 'multer';
 import { deletePreviousPaperResource, getPreviousPaperResources, getSinglePreviousPaperResource, updatePreviousPaperResource, uploadPreviousPaperResource } from '../controllers/previousPaperController.js';
 
@@ -17,10 +17,10 @@ const upload = multer({
   }
 })
 
-router.get("/getPreviousPaperResources", protectRoute, getPreviousPaperResources);
-router.get("/getSinglePreviousPaperResource/:id", protectRoute, getSinglePreviousPaperResource);
-router.post("/upload", upload.single("resource"), protectRoute, uploadPreviousPaperResource);
-router.put("/update/:id", upload.single("resource"), protectRoute, updatePreviousPaperResource);
-router.delete("/delete/:id", protectRoute, deletePreviousPaperResource);
+router.get("/getPreviousPaperResources", adminProtectRoute, getPreviousPaperResources);
+router.get("/getSinglePreviousPaperResource/:id", adminProtectRoute, getSinglePreviousPaperResource);
+router.post("/upload", upload.single("resource"), adminProtectRoute, uploadPreviousPaperResource);
+router.put("/update/:id", upload.single("resource"), adminProtectRoute, updatePreviousPaperResource);
+router.delete("/delete/:id", adminProtectRoute, deletePreviousPaperResource);
 
 export default router;

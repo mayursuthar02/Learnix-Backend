@@ -1,9 +1,9 @@
 import userModel from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 
-const protectRoute = async(req,res,next) => {
+const adminProtectRoute = async(req,res,next) => {
     try {
-        const token = req.cookies.userToken;
+        const token = req.cookies.adminToken;
         if (!token) return res.status(401).json({error: "Unauthorized"});
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -16,4 +16,4 @@ const protectRoute = async(req,res,next) => {
     }
 }
 
-export default protectRoute;
+export default adminProtectRoute;

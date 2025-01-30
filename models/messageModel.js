@@ -39,6 +39,7 @@ const messageSchema = new mongoose.Schema(
           note: { type: String, trim: true },
           description: { type: String, trim: true },
           author: { type: String, trim: true }, 
+          authorProfilePic: { type: String, trim: true }, 
         },
       ], 
       note: {
@@ -50,6 +51,16 @@ const messageSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    responseType : {
+      type: String,
+      enum: ["good", "bad", ""],  
+      default: "",
+    },
+    usersReacted : {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null
+    }
   },
   {
     timestamps: true,

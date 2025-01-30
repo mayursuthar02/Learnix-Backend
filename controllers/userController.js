@@ -211,7 +211,7 @@ export const loginAdmin = async (req, res) => {
       expiresIn: "15d",
     });
 
-    res.cookie("token", token, {
+    res.cookie("adminToken", token, {
       httpOnly: true, //more secure
       maxAge: 15 * 24 * 60 * 60 * 1000, //15 days
       sameSite: "strict", // CSRF
@@ -267,7 +267,7 @@ export const loginUser = async (req, res) => {
       expiresIn: "15d",
     });
 
-    res.cookie("token", token, {
+    res.cookie("userToken", token, {
       httpOnly: true, //more secure
       maxAge: 15 * 24 * 60 * 60 * 1000, //15 days
       sameSite: "strict", // CSRF
@@ -404,9 +404,25 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-export const logout = async (req, res) => {
+export const adminLogout = async (req, res) => {
   try {
-    res.cookie("token", "", { maxAge: 1 });
+    res.cookie("adminToken", "", { maxAge: 1 });
+    res.status(200).json({
+      status: "success",
+      message: "User logged out successfully.",
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({
+      status: "fail",
+      error: "Error in logout" + error.message,
+    });
+  }
+};
+
+export const userLogout = async (req, res) => {
+  try {
+    res.cookie("userToken", "", { maxAge: 1 });
     res.status(200).json({
       status: "success",
       message: "User logged out successfully.",
@@ -422,12 +438,13 @@ export const logout = async (req, res) => {
 
 export const updateUserProfile = async (req, res) => {
   try {
-    const { fullName, email } = req.body;
+    const { fullName } = req.body;
     let { profilePic } = req.body;
     const userId = req.user._id;
 
     const user = await userModel.findById(userId);
-    if (!user) return res.status(400).json({ error: "User not found" });
+    if (!user)
+      return res.status(400).json({ status: "fail", error: "User not found" });
 
     if (profilePic) {
       if (user.profilePic) {
@@ -441,16 +458,21 @@ export const updateUserProfile = async (req, res) => {
 
     // Update User
     user.fullName = fullName || user.fullName;
-    user.email = email || user.email;
     user.profilePic = profilePic || user.profilePic;
     await user.save();
 
     // Password should be null in response
     user.password = null;
-    res.status(200).json(user);
+    console.log(user);
+    res.status(200).json({ status: "success", user });
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ error: "Error in update user " + error.message });
+    res
+      .status(500)
+      .json({
+        status: "error",
+        error: "Error in update user " + error.message,
+      });
   }
 };
 
@@ -496,13 +518,11 @@ export const updateUserDetails = async (req, res) => {
     userData.role = role || userData.role;
     await userData.save();
 
-    res
-      .status(200)
-      .json({
-        status: "success",
-        message: "User details updated successfully",
-        userData,
-      });
+    res.status(200).json({
+      status: "success",
+      message: "User details updated successfully",
+      userData,
+    });
   } catch (error) {
     console.error("Error updating user:", error.message);
     res.status(500).json({
@@ -543,6 +563,28 @@ export const fetchSingleUser = async (req, res) => {
     res.status(500).json({
       status: "error",
       error: `An unexpected error occurred while fetching the user: ${error.message}`,
+    });
+  }
+};
+
+export const getAdminProfessors = async (req, res) => {
+  try {
+    const adminProfessors = await userModel
+      .find({ profileType: "professor", role: { $in: ["admin", "superAdmin"] } }) 
+      .select("fullName profilePic") 
+
+    // Send success response
+    res.status(200).json({
+      status: "success",
+      message: "Admin Professors fetched successfully",
+      adminProfessors,
+    });
+  } catch (error) {
+    console.error("Error fetching admin professors:", error.message);
+    res.status(500).json({
+      status: "error",
+      message: "Error fetching admin professors",
+      error: error.message,
     });
   }
 };

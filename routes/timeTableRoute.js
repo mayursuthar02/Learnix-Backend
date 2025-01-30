@@ -1,5 +1,5 @@
 import express from 'express';
-import protectRoute from '../middleware/protectRoute.js';
+import adminProtectRoute from '../middleware/adminProtectRoute.js';
 import multer from 'multer';
 import { deleteTimeTableResource, getSingleTimeTableResource, getTimeTableResources, updateTimeTableResource, uploadTimeTableResource } from '../controllers/timeTableController.js';
 
@@ -17,10 +17,10 @@ const upload = multer({
   }
 })
 
-router.get("/getTimeTableResources", protectRoute, getTimeTableResources);
-router.get("/getSingleTimeTableResource/:id", protectRoute, getSingleTimeTableResource);
-router.post("/upload", upload.single("resource"), protectRoute, uploadTimeTableResource);
-router.put("/update/:id", upload.single("resource"), protectRoute, updateTimeTableResource);
-router.delete("/delete/:id", protectRoute, deleteTimeTableResource);
+router.get("/getTimeTableResources", adminProtectRoute, getTimeTableResources);
+router.get("/getSingleTimeTableResource/:id", adminProtectRoute, getSingleTimeTableResource);
+router.post("/upload", upload.single("resource"), adminProtectRoute, uploadTimeTableResource);
+router.put("/update/:id", upload.single("resource"), adminProtectRoute, updateTimeTableResource);
+router.delete("/delete/:id", adminProtectRoute, deleteTimeTableResource);
 
 export default router;

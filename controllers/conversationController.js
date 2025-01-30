@@ -10,7 +10,10 @@ export const getConversations = async (req, res) => {
             });
         }
 
-        const conversations = await conversationModel.find({ userId: req.user._id });
+        const conversations = await conversationModel
+        .find({ userId: req.user._id })
+        .sort({ createdAt: -1 });
+        
         return res.status(200).json({ 
             status: "success", 
             message: 'Conversations fetched successfully.', 

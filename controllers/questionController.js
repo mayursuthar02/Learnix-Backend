@@ -39,3 +39,89 @@ export const askAQuestion = async (req, res) => {
     });
   }
 };
+
+export const getProfessorQuestions = async (req, res) => {
+  try {
+    const questions = await questionModel
+    .find({ professorId: req.user._id })
+    .populate("studentId", "fullName profilePic")
+    .sort({ createdAt: -1 });
+
+    // Send success response
+    res.status(200).json({
+      status: "success",
+      message: "Questions fetched successfully",
+      questions,
+    });
+  } catch (error) {
+    console.error("Error fetching professor questions:", error.message);
+    res.status(500).json({
+      status: "error",
+      message: "Error fetching professor questions",
+      error: error.message,
+    });
+  }
+};
+
+export const replyQuestion = async (req, res) => {
+  try {
+    const { reply } = req.body; 
+    const { questionId } = req.params;
+
+    if (!reply || !questionId) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Reply and question ID are required",
+      });
+    }
+
+    const question = await questionModel.findById(questionId);
+
+    if (!question) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Question not found",
+      });
+    }
+
+    question.reply = reply;
+    question.status = "answered";
+    await question.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Replying successfully",
+      question,
+    });
+  } catch (error) {
+    console.error("Error replying to question:", error.message);
+
+    return res.status(500).json({
+      status: "error",
+      message: "Error replying to question",
+      error: error.message,
+    });
+  }
+};
+
+export const getUserReplies = async (req, res) => {
+  try {
+    const questions = await questionModel
+    .find({ studentId: req.user._id })
+    .populate("professorId studentId", "fullName profilePic")
+    .sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      status: "success",
+      message: "Questions fetched successfully",
+      questions,
+    });
+  } catch (error) {
+    console.error("Error fetching student questions:", error.message);
+    res.status(500).json({
+      status: "error",
+      message: "Error fetching student questions",
+      error: error.message,
+    });
+  }
+};

@@ -1,8 +1,7 @@
 import express from 'express';
 import protectRoute from '../middleware/protectRoute.js';
-import { activateScholara, getMaterials, getSemester, start, studentDataSelector } from '../controllers/chatController.js';
+import { activateScholara, getMaterials, getSemester, start, studentDataSelector, textToSpeech } from '../controllers/chatController.js';
 import multer from 'multer';
-
 
 
 const router = express.Router();
@@ -24,7 +23,8 @@ router.post('/get-semster/:option', protectRoute, getSemester);
 router.post('/student-data-Selector/:option/:semester', protectRoute, studentDataSelector);
 router.post('/get-resources/:option/:semester/:studentDataSelector', protectRoute, getMaterials);
 
-// Scholara
+// Learnix
 router.post('/activateScholara', protectRoute, activateScholara);
+router.post('/textToSpeech', protectRoute, textToSpeech);
 
 export default router;

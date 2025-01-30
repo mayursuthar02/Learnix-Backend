@@ -1,5 +1,6 @@
 import express from 'express';
 import protectRoute from '../middleware/protectRoute.js';
+import adminProtectRoute from '../middleware/adminProtectRoute.js';
 import multer from 'multer';
 import { deleteExamDetailsResource, getExamDetailsResources, getSingleExamDetailsResource, updateExamDetailsResource, uploadExamDetailsResource } from '../controllers/examDetailsController.js';
 
@@ -18,10 +19,10 @@ const upload = multer({
   }
 })
 
-router.get("/getExamDetailsResources", protectRoute, getExamDetailsResources);
-router.get("/getSingleExamDetailsResource/:id", protectRoute, getSingleExamDetailsResource);
-router.post("/upload", upload.single("resource"), protectRoute, uploadExamDetailsResource);
-router.put("/update/:id", upload.single("resource"), protectRoute, updateExamDetailsResource);
-router.delete("/delete/:id", protectRoute, deleteExamDetailsResource);
+router.get("/getExamDetailsResources", adminProtectRoute, getExamDetailsResources);
+router.get("/getSingleExamDetailsResource/:id", adminProtectRoute, getSingleExamDetailsResource);
+router.post("/upload", upload.single("resource"), adminProtectRoute, uploadExamDetailsResource);
+router.put("/update/:id", upload.single("resource"), adminProtectRoute, updateExamDetailsResource);
+router.delete("/delete/:id", adminProtectRoute, deleteExamDetailsResource);
 
 export default router;
