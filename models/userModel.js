@@ -15,6 +15,18 @@ const userSchema = new mongoose.Schema(
       lowercase: true, 
       match: [/^\S+@\S+\.\S+$/, "Invalid email format"], 
     },
+    phoneNumber: {
+      type: String,
+      required: true,
+      match: [/^\d{10}$/, "Invalid phone number"],
+    },
+    studentRollNumber: {
+      type: String,
+      trim: true,
+      required: function () {
+        return this.profileType === "student"; // Required only if profileType is "student"
+      },
+    },
     password: {
       type: String,
       required: true,

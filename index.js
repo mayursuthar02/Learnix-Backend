@@ -26,7 +26,7 @@ import connectDB from './db/connectDB.js';
 // Configutation
 dotenv.config();
 const app = express();
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174'];
+const allowedOrigins = ['http://localhost:4050', 'http://localhost:5050'];
 
 
 // Configure Cloudinary

@@ -49,7 +49,7 @@ export const start = async (req, res) => {
       }
     });
     await newMessage.save();
-    res.status(200).json({status: "success", newMessage});
+    res.status(200).json({status: "success", newMessage, conversation});
     
   } catch (error) {
     res.status(500).json({status: "error", error });
@@ -112,6 +112,7 @@ export const getSemester = async(req, res) => {
       }
     });
     await newMessage.save();
+
     res.status(200).json({status: "success", newMessage});
 
   } catch (error) {

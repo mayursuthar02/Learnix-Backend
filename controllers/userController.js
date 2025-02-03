@@ -1,15 +1,14 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
-import nodemailer from "nodemailer";
 import { v2 as cloudinary } from "cloudinary";
-import { v4 as uuidv4 } from "uuid";
 import dotenv from "dotenv";
+// Services
+import sendEmail from "../services/emailService.js"; 
 // Model Import
 import userModel from "../models/userModel.js";
 
+// Dot env Config
 dotenv.config();
-
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -17,40 +16,31 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// Create a Nodemailer transporter (using Gmail in this example)
-const transporter = nodemailer.createTransport({
-  host: "smtp.ethereal.email",
-  port: 587,
-  auth: {
-    user: "erna.schiller64@ethereal.email",
-    pass: "nmT9w8BSRf7ReD4vh4",
-  },
-});
-
-const sendEmail = async (to, subject, text) => {
-  try {
-    const mailOptions = {
-      from: "floy.boyer@ethereal.email", // Replace with your email
-      to,
-      subject,
-      html: text, // Send HTML content if needed
-    };
-
-    const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", info.response);
-  } catch (error) {
-    console.error("Error sending email:", error.message);
-  }
-};
 
 export const SignupUser = async (req, res) => {
   try {
-    const { fullName, email, password, profileType } = req.body;
+    const {
+      fullName,
+      email,
+      password,
+      profileType,
+      phoneNumber,
+      studentRollNo,
+    } = req.body;
 
-    if (!fullName || !email || !password || !profileType) {
+    // Validate required fields
+    if (!fullName || !email || !password || !profileType || !phoneNumber) {
       return res.status(422).json({
         status: "fail",
         error: "All fields are required!",
+      });
+    }
+
+    // If student, ensure studentRollNo is provided
+    if (profileType === "student" && !studentRollNo) {
+      return res.status(422).json({
+        status: "fail",
+        error: "Student Roll Number is required for students!",
       });
     }
 
@@ -69,98 +59,25 @@ export const SignupUser = async (req, res) => {
       email: email.toLowerCase(),
       password: hashedPassword,
       profileType,
+      phoneNumber,
+      studentRollNumber: profileType === "student" ? studentRollNo : undefined,
       profilePic:
         "https://imgcdn.stablediffusionweb.com/2024/10/26/9fc00e9d-1028-4590-9f0f-aa3b812b7926.jpg",
     });
     await newUser.save();
 
-    // Send verification email
-    const text = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Professor Access Request</title>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          background-color: #f4f4f4;
-          margin: 0;
-          padding: 0;
-        }
-        .email-container {
-          max-width: 600px;
-          margin: 20px auto;
-          background-color: #ffffff;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
-        }
-        .header {
-          background-color: #007BFF;
-          color: #ffffff;
-          text-align: center;
-          padding: 20px;
-        }
-        .header h1 {
-          margin: 0;
-          font-size: 24px;
-        }
-        .content {
-          padding: 20px;
-        }
-        .content p {
-          font-size: 16px;
-          line-height: 1.5;
-          margin: 10px 0;
-        }
-        .footer {
-          text-align: center;
-          background-color: #f1f1f1;
-          padding: 10px;
-          font-size: 14px;
-          color: #555;
-        }
-        .button {
-          display: inline-block;
-          background-color: #007BFF;
-          color: #ffffff;
-          text-decoration: none;
-          padding: 10px 20px;
-          border-radius: 4px;
-          margin-top: 20px;
-        }
-        .button:hover {
-          background-color: #0056b3;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="email-container">
-        <div class="header">
-          <h1>Request for Professor Access</h1>
-        </div>
-        <div class="content">
-          <p>Dear Admin,</p>
-          <p>A user has requested to be granted professor access on the platform.</p>
-          <p><strong>User Details:</strong></p>
-          <ul>
-            <li><strong>Name:</strong> ${fullName}</li>
-            <li><strong>Email:</strong> ${email}</li>
-            <li><strong>Profile Type:</strong> Professor</li>
-          </ul>
-          <p>Please review and approve the request in the admin dashboard.</p>
-        </div>
-        <div class="footer">
-          <p>&copy; 2025 Scholara. All rights reserved.</p>
-        </div>
-      </div>
-    </body>
-    </html>
-    `;
+    // Send verification email for professors
     if (profileType === "professor") {
-      sendEmail(email, "Verification email", text);
+      const text = `
+        Dear SuperAdmin, 
+        A user has requested to be granted professor access on the Learnix Platform.
+        
+        User Details:
+        Name: ${fullName}
+        Email: ${email}
+        Profile Type: Professor
+      `;
+      await sendEmail(email, "Verification email", text); // Send the email
     }
 
     res.status(201).json({
@@ -226,6 +143,7 @@ export const loginAdmin = async (req, res) => {
         email: user.email,
         role: user.role,
         profilePic: user.profilePic,
+        phoneNumber: user.phoneNumber,
         token,
       },
     });
@@ -239,7 +157,7 @@ export const loginAdmin = async (req, res) => {
 };
 
 export const loginUser = async (req, res) => {
-  try {
+  try { 
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -282,6 +200,8 @@ export const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         profilePic: user.profilePic,
+        phoneNumber: user.phoneNumber,
+        studentRollNumber: user.studentRollNumber,
         token,
       },
     });
@@ -438,7 +358,7 @@ export const userLogout = async (req, res) => {
 
 export const updateUserProfile = async (req, res) => {
   try {
-    const { fullName } = req.body;
+    const { fullName, phoneNumber, studentRollNumber } = req.body;
     let { profilePic } = req.body;
     const userId = req.user._id;
 
@@ -458,6 +378,8 @@ export const updateUserProfile = async (req, res) => {
 
     // Update User
     user.fullName = fullName || user.fullName;
+    user.phoneNumber = phoneNumber || user.phoneNumber;
+    user.studentRollNumber = studentRollNumber || user.studentRollNumber;
     user.profilePic = profilePic || user.profilePic;
     await user.save();
 
@@ -467,12 +389,10 @@ export const updateUserProfile = async (req, res) => {
     res.status(200).json({ status: "success", user });
   } catch (error) {
     console.log(error.message);
-    res
-      .status(500)
-      .json({
-        status: "error",
-        error: "Error in update user " + error.message,
-      });
+    res.status(500).json({
+      status: "error",
+      error: "Error in update user " + error.message,
+    });
   }
 };
 
@@ -570,8 +490,11 @@ export const fetchSingleUser = async (req, res) => {
 export const getAdminProfessors = async (req, res) => {
   try {
     const adminProfessors = await userModel
-      .find({ profileType: "professor", role: { $in: ["admin", "superAdmin"] } }) 
-      .select("fullName profilePic") 
+      .find({
+        profileType: "professor",
+        role: { $in: ["admin", "superAdmin"] },
+      })
+      .select("fullName profilePic");
 
     // Send success response
     res.status(200).json({
@@ -588,3 +511,4 @@ export const getAdminProfessors = async (req, res) => {
     });
   }
 };
+  
