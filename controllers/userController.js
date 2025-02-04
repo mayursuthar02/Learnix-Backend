@@ -7,14 +7,14 @@ import sendEmail from "../services/emailService.js";
 // Model Import
 import userModel from "../models/userModel.js";
 
-// Dot env Config
-dotenv.config();
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// // Dot env Config
+// dotenv.config();
+// // Configure Cloudinary
+// cloudinary.config({
+//   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+//   api_key: process.env.CLOUDINARY_API_KEY,
+//   api_secret: process.env.CLOUDINARY_API_SECRET,
+// });
 
 
 export const SignupUser = async (req, res) => {
@@ -511,4 +511,24 @@ export const getAdminProfessors = async (req, res) => {
     });
   }
 };
-  
+
+export const searchUsers = async (req, res) => {
+  try {
+      const { query } = req.params;
+
+      const regex = new RegExp(query, "i"); // Case-insensitive search
+
+      const users = await userModel.find({
+          "$or": [
+              { fullName: regex },
+              { studentRollNumber: regex }
+          ]
+      }).select("fullName profilePic _id studentRollNumber");
+
+      res.status(200).json({status: "success", users});
+      
+  } catch (error) {
+      console.log(error.message);
+      res.status(500).json({ status: "error", error: "Error in searching users: " + error.message });
+  }
+};

@@ -1,5 +1,5 @@
 import express from 'express';
-import { adminLogout, deleteUser, fetchSingleUser, getAdminProfessors, getAllProfessors, getAllStudents, loginAdmin, loginUser, SignupUser, updateRole, updateUserDetails, updateUserProfile, userLogout } from '../controllers/userController.js';
+import { adminLogout, deleteUser, fetchSingleUser, getAdminProfessors, getAllProfessors, getAllStudents, loginAdmin, loginUser, searchUsers, SignupUser, updateRole, updateUserDetails, updateUserProfile, userLogout } from '../controllers/userController.js';
 import protectRoute from '../middleware/protectRoute.js';
 import adminProtectRoute from '../middleware/adminProtectRoute.js';
 
@@ -22,6 +22,8 @@ router.put('/updateUserDetails/:userId', adminProtectRoute, updateUserDetails);
 router.put('/updateAdminUserProfile', adminProtectRoute, updateUserProfile);
 
 router.get('/fetchSingleUser/:userId', adminProtectRoute, fetchSingleUser);
+
+router.get('/searchUsers/:query', adminProtectRoute, searchUsers);
 
 // User
 router.post("/login", loginUser);   
