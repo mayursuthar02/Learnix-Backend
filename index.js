@@ -19,6 +19,7 @@ import FAQsRoute from './routes/FAQsRoute.js';
 import questionRoute from './routes/questionRoute.js';
 import eventRoute from './routes/eventRoute.js';
 import userConversationRoute from './routes/userConversationRoute.js';
+import userMessageRoute from './routes/userMessageRoute.js';
 
 // Database Import
 import connectDB from './db/connectDB.js';
@@ -73,6 +74,7 @@ app.use('/api/conversations', conversationRoute);
 app.use('/api/questions', questionRoute);
 app.use('/api/events', eventRoute);
 app.use('/api/userChats', userConversationRoute);
+app.use('/api/userMessages', userMessageRoute);
 
 
 // Server Listen

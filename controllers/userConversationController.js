@@ -73,6 +73,13 @@ export const getAllUserConversation = async (req, res) => {
         })
         .populate("members", "-password -resources")
         .populate("groupAdmin", "-password -resources")
+        .populate({
+            path: "latestMessage",
+            populate: {
+                path: "sender", 
+                select: "fullName profilePic",
+            },
+        })
         .sort({ updatedAt: -1 })
         
         return res.status(201).json({ 
