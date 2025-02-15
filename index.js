@@ -4,6 +4,9 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import { v2 as cloudinary } from "cloudinary";
+import { createServer } from "http";
+// Socket.IO Initialization
+import { initializeSocket } from "./socket/socket.js";
 
 // Routes Import
 import userRoute from './routes/userRoute.js';
@@ -77,8 +80,14 @@ app.use('/api/userChats', userConversationRoute);
 app.use('/api/userMessages', userMessageRoute);
 
 
+// Create HTTP server
+const server = createServer(app);
+
+// Initialize Socket.IO
+initializeSocket(server, allowedOrigins);
+
 // Server Listen
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, ()=> {
-    console.log(`Server listen on port : ${PORT}`);
-});
+server.listen(PORT, () => { 
+    console.log(`Server listening on port: ${PORT}`);
+  });

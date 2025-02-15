@@ -1,21 +1,33 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { v2 as cloudinary } from "cloudinary";
-import dotenv from "dotenv";
 // Services
-import sendEmail from "../services/emailService.js"; 
+import sendEmail from "../services/emailService.js";
 // Model Import
 import userModel from "../models/userModel.js";
 
-// // Dot env Config
-// dotenv.config();
-// // Configure Cloudinary
-// cloudinary.config({
-//   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-//   api_key: process.env.CLOUDINARY_API_KEY,
-//   api_secret: process.env.CLOUDINARY_API_SECRET,
-// });
 
+export const authCheck = async (req, res) => {
+  try {
+    // Get token from cookies or headers
+    const token = req.header("Authorization")?.split(" ")[1];
+
+    if (!token)
+      return res
+        .status(401)
+        .json({success: false, status: "fail", error: "Unauthorized - No token provided" });
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await userModel.findById(decoded.userId).select("-password");
+
+    if (!user) return res.status(404).json({success: false,  error: "User not found" });
+
+    res.json({ success: true, user });
+  } catch (error) {
+    res.status(401).json({ error: "Invalid or Expired Token" });
+  }
+};
 
 export const SignupUser = async (req, res) => {
   try {
@@ -128,16 +140,16 @@ export const loginAdmin = async (req, res) => {
       expiresIn: "15d",
     });
 
-    res.cookie("adminToken", token, {
-      httpOnly: true, //more secure
-      maxAge: 15 * 24 * 60 * 60 * 1000, //15 days
-      sameSite: "strict", // CSRF
-    });
+    // res.cookie("token", token, {
+    //   httpOnly: true, //more secure
+    //   maxAge: 15 * 24 * 60 * 60 * 1000, //15 days
+    //   sameSite: "strict", // CSRF
+    // });
 
     res.status(201).json({
       status: "success",
       message: "Admin Loggedin Successfully",
-      userData: {
+      data: {
         _id: user._id,
         fullName: user.fullName,
         email: user.email,
@@ -157,7 +169,7 @@ export const loginAdmin = async (req, res) => {
 };
 
 export const loginUser = async (req, res) => {
-  try { 
+  try {
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -185,16 +197,16 @@ export const loginUser = async (req, res) => {
       expiresIn: "15d",
     });
 
-    res.cookie("userToken", token, {
-      httpOnly: true, //more secure
-      maxAge: 15 * 24 * 60 * 60 * 1000, //15 days
-      sameSite: "strict", // CSRF
-    });
+    // res.cookie("token", token, {
+    //   httpOnly: true, //more secure
+    //   maxAge: 15 * 24 * 60 * 60 * 1000, //15 days
+    //   sameSite: "strict", // CSRF
+    // });
 
     res.status(200).json({
       status: "success",
       message: "User loggedin successfully.",
-      userData: {
+      data: {
         _id: user._id,
         fullName: user.fullName,
         email: user.email,
@@ -324,25 +336,9 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-export const adminLogout = async (req, res) => {
-  try {
-    res.cookie("adminToken", "", { maxAge: 1 });
-    res.status(200).json({
-      status: "success",
-      message: "User logged out successfully.",
-    });
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({
-      status: "fail",
-      error: "Error in logout" + error.message,
-    });
-  }
-};
-
 export const userLogout = async (req, res) => {
   try {
-    res.cookie("userToken", "", { maxAge: 1 });
+    res.cookie("token", "", { maxAge: 1 });
     res.status(200).json({
       status: "success",
       message: "User logged out successfully.",
@@ -514,21 +510,24 @@ export const getAdminProfessors = async (req, res) => {
 
 export const searchUsers = async (req, res) => {
   try {
-      const { query } = req.params;
+    const { query } = req.params;
 
-      const regex = new RegExp(query, "i"); // Case-insensitive search
+    const regex = new RegExp(query, "i"); // Case-insensitive search
 
-      const users = await userModel.find({
-          "$or": [
-              { fullName: regex },
-              { studentRollNumber: regex }
-          ]
-      }).select("fullName profilePic _id studentRollNumber");
+    const users = await userModel
+      .find({
+        $or: [{ fullName: regex }, { studentRollNumber: regex }],
+      })
+      .select("fullName profilePic _id studentRollNumber");
 
-      res.status(200).json({status: "success", users});
-      
+    res.status(200).json({ status: "success", users });
   } catch (error) {
-      console.log(error.message);
-      res.status(500).json({ status: "error", error: "Error in searching users: " + error.message });
+    console.log(error.message);
+    res
+      .status(500)
+      .json({
+        status: "error",
+        error: "Error in searching users: " + error.message,
+      });
   }
 };

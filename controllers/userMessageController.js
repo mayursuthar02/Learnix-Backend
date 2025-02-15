@@ -56,15 +56,17 @@ export const allMessages = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
     try {
-        const { content, conversationId, messageType } = req.body;
+        const { content, conversationId, attachments } = req.body;
+        let { messageType } = req.body;
 
         // Validate required fields
-        if (!content || !conversationId) {
+        if ((!attachments && !content) || !conversationId) {
             return res.status(400).json({
                 status: "fail",
-                error: "Please provide all required fields: Content and Conversation ID.",
+                error: "Please provide all required fields. Content is required if there is no attachment.",
             });
         }
+
 
         // Check if the conversation exists
         const conversation = await UserConversation.findById(conversationId);
@@ -83,12 +85,15 @@ export const sendMessage = async (req, res) => {
             });
         }
 
+        messageType = attachments ? "image" : "text";
+
         // Create a new message
         const newMessage = await userMessageModel.create({
             sender: req.user._id,
             content,
             conversationId,
-            messageType: messageType || "text"
+            messageType,
+            attachments
         });
 
         // Populate the sender and conversation details
@@ -99,6 +104,15 @@ export const sendMessage = async (req, res) => {
         await UserConversation.findByIdAndUpdate(conversationId, {
             latestMessage: populatedMessage,
         });
+
+        // Increment unread counts for all members except the sender
+        // await UserConversation.findByIdAndUpdate(conversationId, {
+        //     $inc: {
+        //       "unreadCounts.$[elem].count": 1,
+        //     },
+        //   }, {
+        //     arrayFilters: [{ "elem.user": { $ne: req.user._id } }],
+        //   });
 
         // Send success response
         return res.status(201).json({

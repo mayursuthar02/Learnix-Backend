@@ -11,7 +11,7 @@ import { ElevenLabsClient, stream } from "elevenlabs";
 import { Readable } from "stream";
 
 const client = new ElevenLabsClient({
-  apiKey: "sk_fe6faf62d8e01ac46cb3adb212d53cfbaacf536346c316b0",
+  apiKey: "sk_87ac512be5ca5081e8ad06b5ea605a5673f88ba4064c305c",
 });
 
 // 1. Start
@@ -536,20 +536,28 @@ export const activateScholara = async(req, res) => {
 
 export const textToSpeech = async (req, res) => {
   const { text } = req.body;
+
+  if (!text) {
+    return res.status(400).send('Text is required');
+  }
+
   try {
     const audioStream = await client.textToSpeech.convertAsStream("Xb7hH8MSUJpSbSDYk0k2", {
-      text: text, 
-      model_id: "eleven_multilingual_v2", 
-      voice: "Alice" // Use the desired voice
+      text: text,
+      model_id: "eleven_multilingual_v2",
+      voice: "Alice", // Use the desired voice
     });
 
-    // Stream audio back
+    // Set response headers for audio streaming
     res.setHeader('Content-Type', 'audio/mpeg');
-    audioStream.pipe(res); // Directly pipe the audio stream to the response
+    res.setHeader('Content-Disposition', 'inline; filename="speech.mp3"');
+
+    // Stream audio back to the client
+    audioStream.pipe(res);
+
   } catch (error) {
     console.error("Error with ElevenLabs API:", error);
     res.status(500).send('Error generating speech');
   }
 };
-
 
