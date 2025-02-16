@@ -5,6 +5,7 @@ import { v2 as cloudinary } from "cloudinary";
 import sendEmail from "../services/emailService.js";
 // Model Import
 import userModel from "../models/userModel.js";
+import generateToken from "../config/generateJWTToken.js";
 
 
 export const authCheck = async (req, res) => {
@@ -136,15 +137,8 @@ export const loginAdmin = async (req, res) => {
     }
 
     // Generate token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "15d",
-    });
+    const token = generateToken(user._id);
 
-    // res.cookie("token", token, {
-    //   httpOnly: true, //more secure
-    //   maxAge: 15 * 24 * 60 * 60 * 1000, //15 days
-    //   sameSite: "strict", // CSRF
-    // });
 
     res.status(201).json({
       status: "success",
@@ -193,15 +187,7 @@ export const loginUser = async (req, res) => {
     }
 
     // Generate token
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "15d",
-    });
-
-    // res.cookie("token", token, {
-    //   httpOnly: true, //more secure
-    //   maxAge: 15 * 24 * 60 * 60 * 1000, //15 days
-    //   sameSite: "strict", // CSRF
-    // });
+    const token = generateToken(user._id);
 
     res.status(200).json({
       status: "success",

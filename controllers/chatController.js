@@ -26,7 +26,7 @@ export const start = async (req, res) => {
       {option: "Check Exam Details 🗓️", apiRoute: "/get-semster/CHECK_EXAM_DETAILS"},
       {option: "View Time Table 🕒", apiRoute: "/get-semster/VIEW_TIME_TABLE"},
       {option: "Access Previous Papers 📃", apiRoute: "/get-semster/ACCESS_PREVIOUS_PAPERS"},
-      {option: "Ask Learnix... 💡", apiRoute: "/"},
+      // {option: "Ask Learnix... 💡", apiRoute: "/"},
     ];
 
     let conversation = await conversationModel.findById(conversationId);
@@ -494,7 +494,7 @@ export const getMaterials = async(req, res) => {
 
 
 // Scholora Logic
-export const activateScholara = async(req, res) => {
+export const activateLearnix = async(req, res) => {
   try {
     const {prompt, conversationId} = req.body;
     if (!prompt) {
