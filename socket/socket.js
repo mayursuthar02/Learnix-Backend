@@ -6,7 +6,7 @@ import UserConversation from "../models/UserConversationModel.js";
 export const initializeSocket = (server, allowedOrigins) => {
   const io = new Server(server, {
     cors: {
-      origin: allowedOrigins, // Allow frontend origins
+      origin: "*", // Allow frontend origins
       methods: ["GET", "POST"],
       // credentials: true,
     },

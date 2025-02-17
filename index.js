@@ -43,7 +43,7 @@ cloudinary.config({
 
 
 // Database Connection
-connectDB();
+connectDB();    
 
 
 // Middleware
