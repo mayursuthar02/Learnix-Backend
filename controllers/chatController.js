@@ -6,12 +6,13 @@ import timeTableModel from '../models/timeTableModel.js';
 import previousPapersResourceModel from '../models/previousPaperModel.js';
 import { processQueryWithGoogleAI } from '../services/aiService.js';
 import { processQueryWithOpenAI } from '../services/openAiService.js';
+import axios from "axios";
 
 import { ElevenLabsClient, stream } from "elevenlabs";
 import { Readable } from "stream";
 
 const client = new ElevenLabsClient({
-  apiKey: "sk_87ac512be5ca5081e8ad06b5ea605a5673f88ba4064c305c",
+  apiKey: "sk_268453d81448daa80e1e058b5383f4093986cf760820da8e",
 });
 
 // 1. Start
@@ -20,7 +21,8 @@ export const start = async (req, res) => {
     const {conversationId} = req.body;
 
     let message = "Hi there! How can I assist you today? Choose one of the options below, or feel free to ask me directly about any topic like 'What is JS?' or 'Explain variables.'";
-    message = await processQueryWithOpenAI(`${message} make it better say select option. make it short like 2-3 line`)
+    // message = await processQueryWithOpenAI(`${message} make it better say select option. make it short like 2-3 line`)
+    // message = await processQueryWithGoogleAI(`${message}`)
     const options =  [
       {option: "Access Study Materials 📚", apiRoute: "/get-semster/ACCESS_STUDY_MATERIAL"},
       {option: "Check Exam Details 🗓️", apiRoute: "/get-semster/CHECK_EXAM_DETAILS"},
@@ -79,16 +81,16 @@ export const getSemester = async(req, res) => {
 
     if (option === "ACCESS_STUDY_MATERIAL") {
       message = "Great! To help you access the study materials, please let me know your semester. Select from the options below.";
-      message = await processQueryWithOpenAI(`${message} make it better say select option. make it short like 2-3 line`)
+      // message = await processQueryWithOpenAI(`${message} make it better say select option. make it short like 2-3 line`)
     } else if (option === "CHECK_EXAM_DETAILS") {
       message = "Awesome! Let’s get started with your exam details. Please tell me your semester by choosing from the options below.";
-      message = await processQueryWithOpenAI(`${message} make it better say select option. make it short like 2-3 line`)
+      // message = await processQueryWithOpenAI(`${message} make it better say select option. make it short like 2-3 line`)
     } else if (option === "VIEW_TIME_TABLE") {
       message = "Fantastic! To fetch your semester's timetable, please select your semester from the options below.";
-      message = await processQueryWithOpenAI(`${message} make it better say select option. make it short like 2-3 line`)
+      // message = await processQueryWithOpenAI(`${message} make it better say select option. make it short like 2-3 line`)
     } else if (option === "ACCESS_PREVIOUS_PAPERS") {
       message = "Perfect! To find previous exam papers, could you let me know your semester? Choose from the options below.";
-      message = await processQueryWithOpenAI(`${message} make it better say select option. make it short like 2-3 line`)
+      // message = await processQueryWithOpenAI(`${message} make it better say select option. make it short like 2-3 line`)
     }
     
     const options = Array.from({ length: 6 }, (_, i) => {
@@ -152,7 +154,7 @@ export const studentDataSelector = async(req, res) => {
       if (subjects.length === 0) {
         // No subjects found for the given semester
         message = `We couldn't find any subjects for ${semester}. Would you like to explore other semesters?`;
-        message = await processQueryWithOpenAI(`${message} make it better. All you have to do is say that select the options given below, you do not have to give any option as per your choice.. make it short like 2-3 line`)
+        // message = await processQueryWithOpenAI(`${message} make it better. All you have to do is say that select the options given below, you do not have to give any option as per your choice.. make it short like 2-3 line`)
         options = Array.from({ length: 6 }, (_, i) => {
           const sem = `semester ${i + 1}`;
           return {
@@ -164,7 +166,7 @@ export const studentDataSelector = async(req, res) => {
         // Subjects found for the given semester
         message = `Tell the user to select one of the given options for ${semester} study materials, but do not include any specific options in your response. 
         Your reply should be short, simple, and restricted to 2-3 lines.`;
-        message = await processQueryWithOpenAI(message);
+        // message = await processQueryWithOpenAI(message);
         
         options = subjects.map((subject) => ({
           option: subject,
@@ -176,7 +178,7 @@ export const studentDataSelector = async(req, res) => {
       const examTypes = await examDetailsResourceModel.distinct("examType", { semester });
       if (examTypes.length === 0) {
         message = `We couldn't find any exam types for ${semester}. Please check other semesters.`;
-        message = await processQueryWithOpenAI(`${message} make it better. All you have to do is say that select the options given below, you do not have to give any option as per your choice.. make it short like 2-3 line`)
+        // message = await processQueryWithOpenAI(`${message} make it better. All you have to do is say that select the options given below, you do not have to give any option as per your choice.. make it short like 2-3 line`)
         options = Array.from({ length: 6 }, (_, i) => {
           const semester = `semester ${i + 1}`;
           return {
@@ -186,7 +188,7 @@ export const studentDataSelector = async(req, res) => {
         });
       } else {
         message = `Tell the user to select one of the options below for the available exam types in ${semester}, but do not include or mention any specific options yourself. Your response should be concise, limited to 2-3 lines. `;
-        message = await processQueryWithOpenAI(message);        
+        // message = await processQueryWithOpenAI(message);        
         options = examTypes.map((examType) => ({
           option: examType,
           apiRoute: `/get-resources/${option}/${semester}/${examType}`,
@@ -197,7 +199,7 @@ export const studentDataSelector = async(req, res) => {
       const divisions = await timeTableModel.distinct("division", { semester });
       if (divisions.length === 0) {
         message = `No divisions found for ${semester}. Try selecting a different semester.`;
-        message = await processQueryWithOpenAI(`${message} make it better. All you have to do is say that select the options given below, you do not have to give any option as per your choice.. make it short like 2-3 line`)
+        // message = await processQueryWithOpenAI(`${message} make it better. All you have to do is say that select the options given below, you do not have to give any option as per your choice.. make it short like 2-3 line`)
         options = Array.from({ length: 6 }, (_, i) => {
           const semester = `semester ${i + 1}`;
           return {
@@ -207,7 +209,7 @@ export const studentDataSelector = async(req, res) => {
         });
       } else {
         message = "Please select your division to view the timetable:";
-        message = await processQueryWithOpenAI(`${message} make it better. All you have to do is say that select the options given below, you do not have to give any option as per your choice.. make it short like 2-3 line`)
+        // message = await processQueryWithOpenAI(`${message} make it better. All you have to do is say that select the options given below, you do not have to give any option as per your choice.. make it short like 2-3 line`)
         options = divisions.map((division) => ({
           option: division,
           apiRoute: `/get-resources/${option}/${semester}/${division}`,
@@ -218,7 +220,7 @@ export const studentDataSelector = async(req, res) => {
       const examTypes = await previousPapersResourceModel.distinct("examType", { semester });
       if (examTypes.length === 0) {
         message = `We couldn't find any previous papers for ${semester}. Make this message polite, concise, and user-friendly. Emphasize retrying with another semester. Do not add or suggest any options. Keep it 2-3 lines.`;
-        message = await processQueryWithOpenAI(message);
+        // message = await processQueryWithOpenAI(message);
         
         options = Array.from({ length: 6 }, (_, i) => {
           const sem = `Semester ${i + 1}`;
@@ -229,7 +231,7 @@ export const studentDataSelector = async(req, res) => {
         });
       } else {
         message = "Select the exam type for which you need previous papers:";
-        message = await processQueryWithOpenAI(`${message} make it better. All you have to do is say that select the options given below, you do not have to give any option as per your choice.. make it short like 2-3 line`)
+        // message = await processQueryWithOpenAI(`${message} make it better. All you have to do is say that select the options given below, you do not have to give any option as per your choice.. make it short like 2-3 line`)
         options = examTypes.map((examType) => ({
           option: examType,
           apiRoute: `/get-resources/${option}/${semester}/${examType}`,
@@ -299,7 +301,7 @@ export const getMaterials = async(req, res) => {
       if (materials.length === 0) {
         // No resources found
         message = `Unfortunately, we couldn't find study materials for "${studentDataSelector}" in "${semester}". Make this message polite, concise, and user-friendly. Do not include suggestions or options. Keep it 2-3 lines.`;
-        message = await processQueryWithOpenAI(message);
+        // message = await processQueryWithOpenAI(message);
         
   
         const subjects = await resourceModel.distinct("subject", { semester });
@@ -313,7 +315,7 @@ export const getMaterials = async(req, res) => {
       } else {
         // Resource Found
         message = `Here are some valuable resources for "${studentDataSelector}" in ${semester}. Make this message polite and concise, and ensure it encourages the user to click the provided links for access. Keep it 2-3 lines.`;
-        message = await processQueryWithOpenAI(message);
+        // message = await processQueryWithOpenAI(message);
         
         
         const resources = materials.map(material => ({
@@ -326,8 +328,9 @@ export const getMaterials = async(req, res) => {
           authorProfilePic: material.userId.profilePic
         }));
   
-        let note = await processQueryWithOpenAI(`
-          Generate a friendly, short message asking users to feel free to ask for resources for other subjects in the current semester. Mention that the subject and semester info will be dynamic and taken from user input. Keep it 1 half line.`);        
+        // let note = await processQueryWithOpenAI(`
+        //   Generate a friendly, short message asking users to feel free to ask for resources for other subjects in the current semester. Mention that the subject and semester info will be dynamic and taken from user input. Keep it 1 half line.`);        
+        let note = "Generate a friendly, short message asking users to feel free to ask for resources for other subjects in the current semester. Mention that the subject and semester info will be dynamic and taken from user input. Keep it 1 half line.";        
   
         const subjects = await resourceModel.distinct("subject", { semester });
         options = subjects.map((subj) => ({
@@ -346,7 +349,7 @@ export const getMaterials = async(req, res) => {
       if (materials.length === 0) {
         // No resources found
         message = `We couldn't locate detailed information for "${studentDataSelector}" in "${semester}". Would you like to explore other exam types? Keep it 1 half line.`;
-        message = await processQueryWithOpenAI(message);
+        // message = await processQueryWithOpenAI(message);
   
         const examTypes = await examDetailsResourceModel.distinct("examType", { semester });
         options = examTypes.map((examType) => ({
@@ -358,10 +361,12 @@ export const getMaterials = async(req, res) => {
       
       } else {
         // Resource Found
-        message = await processQueryWithOpenAI(`
-          Generate a friendly, personalized message confirming the user's choice of subject ('${studentDataSelector}') and semester ('${semester}'). 
-          The message should include an exam details link and sound welcoming, like: "Great choice! Here's the exam details link for 'subject' in 'semester'. keep it short 1-2 lines."
-        `);
+        // message = await processQueryWithOpenAI(`
+        //   Generate a friendly, personalized message confirming the user's choice of subject ('${studentDataSelector}') and semester ('${semester}'). 
+        //   The message should include an exam details link and sound welcoming, like: "Great choice! Here's the exam details link for 'subject' in 'semester'. keep it short 1-2 lines."
+        // `);
+
+        message = `Great choice! Here's the exam details link for ${studentDataSelector} in ${semester}.`;
         
         const resources = materials.map(material => ({
           title: material.title,
@@ -374,7 +379,7 @@ export const getMaterials = async(req, res) => {
         }));
   
         let note = `If you need more details about other exams for ${semester}, feel free to ask! Keep it 1 half line.`;
-        note = await processQueryWithOpenAI(note);
+        // note = await processQueryWithOpenAI(note);
   
         const examTypes = await examDetailsResourceModel.distinct("examType", { semester });
         options = examTypes.map((examType) => ({
@@ -392,7 +397,7 @@ export const getMaterials = async(req, res) => {
       if (materials.length === 0) {
         // No resources found
         message = `We couldn't found time table for "${studentDataSelector}" in "${semester}". Would you like to explore other divisions? Keep it 1 half line.`;
-        message = await processQueryWithOpenAI(message);
+        // message = await processQueryWithOpenAI(message);
   
         const divisions = await timeTableModel.distinct("division", { semester });
         options = divisions.map((division) => ({
@@ -405,7 +410,7 @@ export const getMaterials = async(req, res) => {
       } else {
         // Resource Found
         message = `Great choice! Here's the time table link for '${studentDataSelector}' in ${semester}. Keep it 1 half line.`;
-        message = await processQueryWithOpenAI(message);
+        // message = await processQueryWithOpenAI(message);
         
         const resources = materials.map(material => ({
           title: material.title,
@@ -418,7 +423,7 @@ export const getMaterials = async(req, res) => {
         }));
   
         let note = `If you need other division title table for ${semester}, feel free to ask! Keep it 1 half line.`;
-        note = await processQueryWithOpenAI(note);
+        // note = await processQueryWithOpenAI(note);
   
         const divisions = await timeTableModel.distinct("division", { semester });
         options = divisions.map((division) => ({
@@ -436,7 +441,7 @@ export const getMaterials = async(req, res) => {
       if (materials.length === 0) {
         // No resources found
         message = `We couldn't find examtype for "${studentDataSelector}" in "${semester}". Would you like to explore other exam types?`;
-        message = await processQueryWithOpenAI(message);
+        // message = await processQueryWithOpenAI(message);
   
         const examTypes = await previousPapersResourceModel.distinct("examType", { semester });
         options = examTypes.map((examType) => ({
@@ -461,7 +466,7 @@ export const getMaterials = async(req, res) => {
         }));
   
         let note = `If you need papers for other exams for ${semester}, feel free to ask! Keep it 1 half line.`;
-        note = await processQueryWithOpenAI(note);
+        // note = await processQueryWithOpenAI(note);
         const examTypes = await previousPapersResourceModel.distinct("examType", { semester });
         options = examTypes.map((examType) => ({
           option: examType,
@@ -515,8 +520,8 @@ export const activateLearnix = async(req, res) => {
     await conversation.save();
 
 
-    // const response = await processQueryWithGoogleAI(prompt);
-    const response = await processQueryWithOpenAI(prompt);
+    const response = await processQueryWithGoogleAI(prompt);
+    // const response = await processQueryWithOpenAI(prompt);
 
 
     const newMessage = new messageModel({
@@ -561,3 +566,71 @@ export const textToSpeech = async (req, res) => {
   }
 };
 
+
+// export const textToSpeech = async (req, res) => {
+//   const { text } = req.body;
+
+//   // Validate input
+//   if (!text) {
+//     return res.status(400).send('Text is required');
+//   }
+
+//   try {
+//     // Murf AI API endpoint and configuration
+//     const murfApiKey = 'ap2_9279bada-2b4b-40ca-aeee-9ed755e08af1'; // Your API key
+//     const murfApiUrl = 'https://api.murf.ai/v1/speech/generate';
+
+//     // Prepare the request payload for Murf AI
+//     const payload = {
+//       text: text,
+//       voiceId: 'en-US-natalie', // Use a valid Murf voice ID (from official example)
+//       // Remove format, sampleRate, languageCode unless confirmed by Murf API docs
+//     };
+
+//     // Make the API request to Murf
+//     const response = await axios.post(murfApiUrl, payload, {
+//       headers: {
+//         'api-key': murfApiKey, // Use api-key header as per official code
+//         'Content-Type': 'application/json',
+//         'Accept': 'application/json', // Expect JSON response
+//       },
+//     });
+
+//     // Log the response to understand its structure
+//     console.log('Murf API Response:', response.data);
+
+//     // Check if the response contains audio data
+//     // Murf might return a base64-encoded audio string or a URL
+//     if (response.data && response.data.audioContent) {
+//       // If audioContent is base64-encoded (common in JSON responses)
+//       const audioBuffer = Buffer.from(response.data.audioContent, 'base64');
+
+//       // Set response headers for audio streaming
+//       res.setHeader('Content-Type', 'audio/mpeg');
+//       res.setHeader('Content-Disposition', 'inline; filename="speech.mp3"');
+
+//       // Send the audio buffer to the client
+//       res.send(audioBuffer);
+//     } else if (response.data && response.data.audioUrl) {
+//       // If Murf returns a URL, you might need to fetch the audio
+//       const audioResponse = await axios.get(response.data.audioUrl, {
+//         responseType: 'stream',
+//       });
+
+//       res.setHeader('Content-Type', 'audio/mpeg');
+//       res.setHeader('Content-Disposition', 'inline; filename="speech.mp3"');
+//       audioResponse.data.pipe(res);
+//     } else {
+//       throw new Error('No audio content or URL in response');
+//     }
+
+//   } catch (error) {
+//     // Improved error handling
+//     console.error('Error with Murf AI API:', error.message);
+//     if (error.response) {
+//       console.error('Response Status:', error.response.status);
+//       console.error('Response Data:', error.response.data);
+//     }
+//     res.status(500).send('Error generating speech');
+//   }
+// };

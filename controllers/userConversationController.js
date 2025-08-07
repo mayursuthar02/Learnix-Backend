@@ -1,4 +1,5 @@
 import UserConversationModel from "../models/UserConversationModel.js";
+import MessageModel from "../models/UserMessageModel.js";
 import userModel from "../models/userModel.js";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -139,6 +140,57 @@ export const markConversationAsRead = async (req, res) => {
       status: "fail",
       error:
         "An error occurred while marking the conversation as read. Please try again later.",
+    });
+  }
+};
+
+
+export const deleteGroupConversation = async (req, res) => {
+  try {
+    const { conversationId } = req.body;
+    console.log({conversationId})
+    if (!conversationId) {
+      return res.status(400).json({
+        status: "fail",
+        error: "Please provide the conversation ID.",
+      });
+    }
+
+    // Find the conversation
+    const conversation = await UserConversationModel.findById(conversationId);
+    
+    if (!conversation) {
+      return res.status(404).json({
+        status: "fail",
+        error: "Conversation not found.",
+      });
+    }
+
+    // Verify the requesting user is the group admin
+    if (conversation.groupAdmin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        status: "fail",
+        error: "Access denied! Only the group admin can delete this conversation.",
+      });
+    }
+
+    // Delete all messages related to this conversation
+    await MessageModel.deleteMany({ conversationId: conversationId });
+
+    // Delete the conversation itself
+    await UserConversationModel.findByIdAndDelete(conversationId);
+
+    return res.status(200).json({
+      status: "success",
+      message: "Group conversation and all related messages deleted successfully.",
+    });
+
+  } catch (error) {
+    console.error("Error deleting group conversation:", error);
+    return res.status(500).json({
+      status: "fail",
+      error:
+        "An error occurred while deleting the group conversation. Please try again later.",
     });
   }
 };
