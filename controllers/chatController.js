@@ -12,7 +12,7 @@ import { ElevenLabsClient, stream } from "elevenlabs";
 import { Readable } from "stream";
 
 const client = new ElevenLabsClient({
-  apiKey: "sk_268453d81448daa80e1e058b5383f4093986cf760820da8e",
+  apiKey: process.env.ELEVENLABS_API_KEY,
 });
 
 // 1. Start
