@@ -32,7 +32,7 @@ import connectDB from './db/connectDB.js';
 dotenv.config();
 const app = express();
 // const allowedOrigins = ['http://localhost:4050', 'http://localhost:5050'];
-const allowedOrigins = ['http://localhost:4050', 'https://learnix-frontend-client.vercel.app'];
+const allowedOrigins = ['https://learnix-frontend-admin.vercel.app/', 'https://learnix-frontend-client.vercel.app'];
 
 
 // Configure Cloudinary
